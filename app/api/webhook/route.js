@@ -129,3 +129,9 @@ export async function POST(request) {
     });
   }
 }
+
+curl -X POST https://www.strava.com/api/v3/push_subscriptions \
+  -F client_id=VOTRE_CLIENT_ID \
+  -F client_secret=VOTRE_CLIENT_SECRET \
+  -F callback_url=https://votre-domaine.vercel.app/api/webhook \
+  -F verify_token=votre-token-secret
