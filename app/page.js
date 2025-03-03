@@ -5,9 +5,10 @@
 import ActivityCard from "@/components/ActivityCard";
 import StravaAuthButton from "@/components/StravaAuthButton";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-export default function Home() {
+// Composant qui utilise useSearchParams doit être enveloppé dans Suspense
+function HomeContent() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -214,5 +215,23 @@ export default function Home() {
         </div>
       )}
     </main>
+  );
+}
+
+// Composant de chargement à afficher pendant le suspense
+function LoadingComponent() {
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  );
+}
+
+// Composant principal qui enveloppe le contenu dans Suspense
+export default function Home() {
+  return (
+    <Suspense fallback={<LoadingComponent />}>
+      <HomeContent />
+    </Suspense>
   );
 }
