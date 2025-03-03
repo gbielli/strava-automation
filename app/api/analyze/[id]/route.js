@@ -1,6 +1,7 @@
 // app/api/analyze/[id]/route.js
-
-import { analyzeActivity, getAccessToken } from "@/lib/strava";
+import { analyzeActivity } from "@/lib/strava"; // Votre fonction existante d'analyse
+import { getAccessToken } from "@/lib/strava-auth";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Récupérer un token d'accès
+    // Récupérer un token d'accès pour l'utilisateur connecté
     const tokenData = await getAccessToken();
 
     // Récupérer les détails de l'activité spécifique
@@ -35,17 +36,23 @@ export async function GET(request, { params }) {
 
     const activity = await activityResponse.json();
 
-    // Analyser l'activité
+    // Analyser l'activité (utilisez votre fonction existante)
     const result = await analyzeActivity(tokenData.access_token, activity);
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Erreur dans l'API analyze/[id]:", error);
+
+    // Si l'erreur est liée à l'authentification, renvoyer un code 401
+    if (error.message.includes("Utilisateur non connecté")) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
-      {
-        success: false,
-        message: error.message,
-      },
+      { success: false, message: error.message },
       { status: 500 }
     );
   }
