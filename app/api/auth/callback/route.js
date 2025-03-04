@@ -59,12 +59,12 @@ export async function GET(request) {
 
     // Rediriger vers la page d'accueil avec un message de succès
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/?auth_success=true`
+      `${process.env.NEXT_PUBLIC_BASE_URL}/?auth_success=true`
     );
   } catch (error) {
     console.error("Erreur dans le callback d'authentification:", error);
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/?auth_error=${encodeURIComponent(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/?auth_error=${encodeURIComponent(
         error.message
       )}`
     );
