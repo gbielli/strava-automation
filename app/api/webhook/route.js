@@ -1,6 +1,6 @@
 // app/api/webhook/route.js
 import { NextResponse } from "next/server";
-import { analyzeActivity, getAccessToken } from "@/lib/strava";
+import { processActivityWebhook } from "@/lib/strava-service";
 
 export const dynamic = "force-dynamic";
 
@@ -50,62 +50,20 @@ export async function POST(request) {
   try {
     // Répondre rapidement pour respecter le délai de 2 secondes de Strava
     // Traiter l'événement de manière asynchrone
-    const processWebhookEvent = async () => {
+    const processEvent = async () => {
       try {
         const data = await request.json();
-
         console.log("Webhook Strava reçu:", JSON.stringify(data));
 
-        // Vérifier que c'est un événement d'activité de type création ou mise à jour
-        if (
-          data.object_type === "activity" &&
-          (data.aspect_type === "create" || data.aspect_type === "update")
-        ) {
-          // Obtenir l'ID de l'activité et de l'athlète
-          const activityId = data.object_id;
-          const athleteId = data.owner_id;
+        // Traiter l'événement d'activité
+        const result = await processActivityWebhook(data);
 
-          console.log(
-            `Événement webhook pour l'activité ${activityId} de l'athlète ${athleteId}`
-          );
-
-          // Obtenir un token d'accès
-          const tokenData = await getAccessToken();
-
-          // Récupérer les détails de l'activité spécifique
-          const activityResponse = await fetch(
-            `https://www.strava.com/api/v3/activities/${activityId}`,
-            {
-              headers: { Authorization: `Bearer ${tokenData.access_token}` },
-            }
-          );
-
-          if (!activityResponse.ok) {
-            const errorData = await activityResponse.json();
-            throw new Error(
-              `Erreur API Strava: ${
-                errorData.message || activityResponse.statusText
-              }`
-            );
-          }
-
-          const activity = await activityResponse.json();
-
-          // Analyser directement cette activité spécifique
-          const result = await analyzeActivity(
-            tokenData.access_token,
-            activity
-          );
-
-          console.log(
-            `Analyse de l'activité ${activityId} via webhook terminée:`,
-            result.processed ? "Traitée" : "Ignorée (pas un fractionné)"
-          );
-        } else {
-          console.log(
-            `Événement webhook ignoré - type: ${data.object_type}, aspect: ${data.aspect_type}`
-          );
-        }
+        console.log(
+          "Résultat du traitement webhook:",
+          result.processed
+            ? `Activité traitée pour l'athlète ${result.athleteId}`
+            : `Activité ignorée: ${result.message}`
+        );
       } catch (error) {
         console.error(
           "Erreur lors du traitement asynchrone du webhook:",
@@ -115,7 +73,7 @@ export async function POST(request) {
     };
 
     // Lancer le traitement de manière asynchrone et renvoyer une réponse immédiatement
-    processWebhookEvent();
+    processEvent();
 
     // Répondre immédiatement avec un 200 OK comme exigé par Strava
     return NextResponse.json({

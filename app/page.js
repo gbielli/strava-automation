@@ -1,5 +1,4 @@
 // app/page.js
-// Page d'accueil avec affichage des activités récentes et possibilité d'analyse
 
 "use client";
 import ActivityCard from "@/components/ActivityCard";

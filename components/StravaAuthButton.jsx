@@ -1,52 +1,45 @@
 // components/StravaAuthButton.jsx
+"use client";
 
-const StravaAuthButton = () => {
-  // Construire l'URL d'autorisation Strava
-  const clientId = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID;
+import { useEffect, useState } from "react";
 
-  // URL de callback (doit être configurée dans les paramètres de l'application Strava)
-  const redirectUri =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/auth/callback`
-      : process.env.NEXT_PUBLIC_REDIRECT_URI ||
-        "http://localhost:3000/auth/callback";
+export default function StravaAuthButton() {
+  const [authUrl, setAuthUrl] = useState("#");
 
-  // Générer un état aléatoire pour la sécurité
-  const state = Math.random().toString(36).substring(2, 15);
+  useEffect(() => {
+    // Récupérer l'URL d'authentification du serveur
+    const fetchAuthUrl = async () => {
+      try {
+        const response = await fetch("/api/auth/url");
+        if (response.ok) {
+          const data = await response.json();
+          setAuthUrl(data.url);
+        } else {
+          console.error(
+            "Erreur lors de la récupération de l'URL d'authentification"
+          );
+        }
+      } catch (error) {
+        console.error("Erreur:", error);
+      }
+    };
 
-  // Scopes requis
-  const scope = "activity:read_all,activity:write";
-
-  // Construire l'URL d'autorisation
-  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-    redirectUri
-  )}&response_type=code&scope=${scope}&state=${state}`;
+    fetchAuthUrl();
+  }, []);
 
   return (
     <a
       href={authUrl}
-      className="flex items-center justify-center gap-2 px-4 py-3 font-bold text-white bg-orange-500 rounded hover:bg-orange-600 transition-colors"
+      className="flex items-center justify-center px-4 py-2 font-bold text-white bg-orange-500 hover:bg-orange-600 rounded transition-colors"
     >
-      {/* SVG Logo Strava */}
       <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
         viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        className="h-5 w-5 mr-2 fill-current"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        <path
-          d="M10 6L8 12H13.5L13 14H9L7 20H14L16.5 14H11L12 9L15 6H10Z"
-          fill="white"
-        />
+        <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
       </svg>
       Se connecter avec Strava
     </a>
   );
-};
-
-export default StravaAuthButton;
+}

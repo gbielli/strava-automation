@@ -1,12 +1,22 @@
 // app/api/analyze/[id]/route.js
-import { analyzeActivity } from "@/lib/strava"; // Votre fonction existante d'analyse
-import { getAccessToken } from "@/lib/strava-auth";
+import {
+  generateWorkoutDescription,
+  shouldProcessActivity,
+} from "@/lib/strava";
+import {
+  getActivityLaps,
+  getStravaActivity,
+  getValidAccessToken,
+  updateActivityDescription,
+} from "@/lib/strava-service";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request, { params }) {
   try {
+    // Récupérer l'ID de l'activité
     const activityId = params.id;
 
     if (!activityId) {
@@ -16,43 +26,65 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Récupérer un token d'accès pour l'utilisateur connecté
-    const tokenData = await getAccessToken();
+    // Récupérer l'ID utilisateur depuis les cookies
+    const cookieStore = cookies();
+    const userId = cookieStore.get("userId")?.value;
 
-    // Récupérer les détails de l'activité spécifique
-    const activityResponse = await fetch(
-      `https://www.strava.com/api/v3/activities/${activityId}`,
-      {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
-      }
-    );
-
-    if (!activityResponse.ok) {
-      const errorData = await activityResponse.json();
-      throw new Error(
-        `Erreur API Strava: ${errorData.message || activityResponse.statusText}`
-      );
-    }
-
-    const activity = await activityResponse.json();
-
-    // Analyser l'activité (utilisez votre fonction existante)
-    const result = await analyzeActivity(tokenData.access_token, activity);
-
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error("Erreur dans l'API analyze/[id]:", error);
-
-    // Si l'erreur est liée à l'authentification, renvoyer un code 401
-    if (error.message.includes("Utilisateur non connecté")) {
+    if (!userId) {
       return NextResponse.json(
-        { success: false, message: error.message },
+        { success: false, message: "Utilisateur non authentifié" },
         { status: 401 }
       );
     }
 
+    // Obtenir un token d'accès valide
+    const accessToken = await getValidAccessToken(userId);
+
+    // Récupérer les détails de l'activité
+    const activity = await getStravaActivity(accessToken, activityId);
+
+    // Vérifier si c'est un fractionné
+    if (!shouldProcessActivity(activity)) {
+      return NextResponse.json({
+        success: true,
+        message: `Activité "${activity.name}" ignorée - pas un fractionné`,
+        activity: {
+          ...activity,
+          isIntervalWorkout: false,
+          analyzed: false,
+        },
+        processed: false,
+      });
+    }
+
+    // Récupérer les laps
+    const laps = await getActivityLaps(accessToken, activityId);
+
+    // Générer la description
+    const newDescription = generateWorkoutDescription(activity, laps);
+
+    // Mettre à jour la description sur Strava
+    await updateActivityDescription(accessToken, activityId, newDescription);
+
+    // Renvoyer l'activité mise à jour
+    return NextResponse.json({
+      success: true,
+      message: `Activité "${activity.name}" analysée et mise à jour avec succès`,
+      activity: {
+        ...activity,
+        description: newDescription,
+        isIntervalWorkout: true,
+        analyzed: true,
+      },
+      processed: true,
+    });
+  } catch (error) {
+    console.error(`Erreur lors de l'analyse de l'activité:`, error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      {
+        success: false,
+        message: error.message,
+      },
       { status: 500 }
     );
   }

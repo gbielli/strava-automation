@@ -1,23 +1,38 @@
 // app/api/auth/status/route.js
+import { PrismaClient } from "@prisma/client";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+
+const prisma = new PrismaClient();
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Vérifier si le refresh token est présent dans les cookies
     const cookieStore = cookies();
-    const refreshToken = cookieStore.get("strava_refresh_token");
+    const userId = cookieStore.get("userId")?.value;
 
-    // Alternativement, vérifier si le refresh token est dans les variables d'environnement
-    const envRefreshToken = process.env.STRAVA_REFRESH_TOKEN;
+    if (!userId) {
+      return NextResponse.json({ isAuthenticated: false });
+    }
 
-    const isAuthenticated = !!refreshToken || !!envRefreshToken;
+    // Vérifier si l'utilisateur existe dans la base de données
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, stravaId: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ isAuthenticated: false });
+    }
 
     return NextResponse.json({
-      isAuthenticated,
-      // N'incluez pas le token lui-même dans la réponse pour des raisons de sécurité
+      isAuthenticated: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        stravaId: user.stravaId,
+      },
     });
   } catch (error) {
     console.error(
@@ -25,10 +40,7 @@ export async function GET() {
       error
     );
     return NextResponse.json(
-      {
-        isAuthenticated: false,
-        error: error.message,
-      },
+      { success: false, message: error.message, isAuthenticated: false },
       { status: 500 }
     );
   }
