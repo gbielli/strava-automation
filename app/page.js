@@ -1,63 +1,15 @@
 // app/page.js
+// Page d'accueil avec affichage des activités récentes et possibilité d'analyse
 
 "use client";
 import ActivityCard from "@/components/ActivityCard";
-import StravaAuthButton from "@/components/StravaAuthButton";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-// Composant qui utilise useSearchParams doit être enveloppé dans Suspense
-function HomeContent() {
+export default function Home() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authStatus, setAuthStatus] = useState(null);
-
-  const searchParams = useSearchParams();
-
-  // Vérifier les messages d'authentification dans l'URL
-  useEffect(() => {
-    const authSuccess = searchParams.get("auth_success");
-    const authError = searchParams.get("auth_error");
-
-    if (authSuccess) {
-      setAuthStatus({ type: "success", message: "Connexion Strava réussie!" });
-      setIsAuthenticated(true);
-      // Charger les activités automatiquement
-      loadActivities();
-    } else if (authError) {
-      setAuthStatus({
-        type: "error",
-        message: `Erreur d'authentification: ${decodeURIComponent(authError)}`,
-      });
-    }
-
-    // Vérifier s'il y a déjà une session active
-    checkAuthStatus();
-  }, [searchParams]);
-
-  // Vérifier le statut d'authentification
-  const checkAuthStatus = async () => {
-    try {
-      const response = await fetch("/api/auth/status");
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsAuthenticated(data.isAuthenticated);
-
-        if (data.isAuthenticated) {
-          loadActivities();
-        }
-      }
-    } catch (err) {
-      console.error(
-        "Erreur lors de la vérification de l'authentification:",
-        err
-      );
-    }
-  };
 
   // Fonction pour charger les activités récentes
   const loadActivities = async () => {
@@ -121,116 +73,129 @@ function HomeContent() {
     }
   };
 
+  // Charger les activités au chargement de la page
+  useEffect(() => {
+    loadActivities();
+  }, []);
+
   return (
-    <main className="min-h-screen p-4 md:p-8">
-      <header className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          Analyseur Strava
-        </h1>
-        <p className="text-gray-600 mb-4">
-          Analyse automatiquement vos séances de fractionné et enrichit leur
-          description.
-        </p>
-
-        {/* Afficher le message d'authentification */}
-        {authStatus && (
-          <div
-            className={`p-4 mb-4 rounded ${
-              authStatus.type === "success"
-                ? "bg-green-50 border border-green-500"
-                : "bg-red-50 border border-red-500"
-            }`}
-          >
-            <p
-              className={
-                authStatus.type === "success"
-                  ? "text-green-700"
-                  : "text-red-700"
-              }
-            >
-              {authStatus.message}
+    <div className="min-h-screen flex flex-col">
+      {/* Hero section / Header amélioré */}
+      <header className="bg-gradient-to-r from-orange-500 to-red-600 text-white py-16">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Empower your Strava activities descriptions with no effort
+            </h1>
+            <p className="text-xl mb-8 max-w-3xl mx-auto">
+              Automatically analyze your interval workouts and enhance their
+              descriptions with detailed statistics and insightful data.
             </p>
-          </div>
-        )}
 
-        <div className="flex flex-wrap gap-4">
-          {isAuthenticated ? (
-            <button
-              onClick={loadActivities}
-              disabled={loading}
-              className="px-4 py-2 font-bold text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-blue-300"
-            >
-              {loading ? "Chargement..." : "Rafraîchir les activités"}
-            </button>
-          ) : (
-            <StravaAuthButton />
-          )}
+            {/* Si vous avez un bouton de connexion Strava, vous pouvez l'ajouter ici */}
+            {/* <button className="bg-white text-orange-600 font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-gray-100">
+              Connect with Strava
+            </button> */}
+          </div>
         </div>
       </header>
 
-      {error && (
-        <div className="p-4 mb-6 border border-red-500 bg-red-50 rounded">
-          <p className="text-red-700">{error}</p>
-        </div>
-      )}
-
-      {isAuthenticated && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Activités récentes</h2>
-
-          {activities.length === 0 && !loading ? (
-            <p>Aucune activité trouvée.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {activities.map((activity) => (
-                <ActivityCard
-                  key={activity.id}
-                  activity={activity}
-                  onAnalyze={() => analyzeActivity(activity.id)}
-                  analyzing={analyzing}
-                />
-              ))}
+      {/* Contenu principal */}
+      <main className="flex-grow bg-gray-50 p-4 md:p-8">
+        <div className="container mx-auto max-w-6xl">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold mb-2">
+                  Analyseur Strava
+                </h2>
+                <p className="text-gray-600">
+                  Analyse automatiquement vos séances de fractionné et enrichit
+                  leur description.
+                </p>
+              </div>
+              <button
+                onClick={loadActivities}
+                disabled={loading}
+                className="mt-4 md:mt-0 px-6 py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition-colors shadow-md"
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Chargement...
+                  </span>
+                ) : (
+                  "Rafraîchir les activités"
+                )}
+              </button>
             </div>
-          )}
 
-          {loading && (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          )}
+            {error && (
+              <div className="p-4 mb-6 border border-red-500 bg-red-50 rounded-lg">
+                <p className="text-red-700">{error}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-6 border-b pb-2">
+              Activités récentes
+            </h2>
+
+            {activities.length === 0 && !loading ? (
+              <div className="bg-white p-8 rounded-lg shadow text-center">
+                <p className="text-gray-500">Aucune activité trouvée.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {activities.map((activity) => (
+                  <ActivityCard
+                    key={activity.id}
+                    activity={activity}
+                    onAnalyze={() => analyzeActivity(activity.id)}
+                    analyzing={analyzing}
+                  />
+                ))}
+              </div>
+            )}
+
+            {loading && (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </main>
 
-      {!isAuthenticated && !loading && (
-        <div className="my-8 p-6 border rounded-lg bg-gray-50">
-          <h2 className="text-xl font-bold mb-3">
-            Commencez par vous connecter
-          </h2>
-          <p className="mb-4">
-            Connectez-vous avec votre compte Strava pour accéder à vos activités
-            récentes et analyser automatiquement vos séances de fractionné.
+      {/* Footer simple */}
+      <footer className="bg-gray-800 text-white py-6">
+        <div className="container mx-auto text-center text-gray-400 text-sm">
+          <p>
+            © {new Date().getFullYear()} Strava Analyzer. Cet outil n'est pas
+            affilié à Strava Inc.
           </p>
-          <StravaAuthButton />
         </div>
-      )}
-    </main>
-  );
-}
-
-// Composant de chargement à afficher pendant le suspense
-function LoadingComponent() {
-  return (
-    <div className="flex justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </footer>
     </div>
-  );
-}
-
-// Composant principal qui enveloppe le contenu dans Suspense
-export default function Home() {
-  return (
-    <Suspense fallback={<LoadingComponent />}>
-      <HomeContent />
-    </Suspense>
   );
 }
