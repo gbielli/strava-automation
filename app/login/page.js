@@ -1,5 +1,7 @@
 // app/login/page.js
 "use client";
+import Logo from "@/components/logo";
+import { StravaLogo } from "@/components/StravaLogo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,69 +34,70 @@ export default function Login() {
   };
 
   return (
-    <div className="">
-      {/* <Logo /> */}
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold">
-              Empower your Strava activities descriptions with no effort
-            </CardTitle>
-            <CardDescription>
-              Automatically analyze your interval workouts and enhance their
-              descriptions with detailed statistics and insightful data.
-            </CardDescription>
-          </CardHeader>
-
-          <CardFooter>
-            <Button
-              className="w-full bg-orange-500 hover:bg-orange-600"
-              onClick={handleStravaLogin}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Connexion en cours...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-2"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066l-2.084 4.116z" />
-                    <path d="M10.298 8.527l4.078-8.527 4.080 8.527h-2.687l-1.394-2.922-1.391 2.922h-2.686z" />
-                    <path d="M0 8.527l4.080-8.527 4.078 8.527h-2.686L4.079 5.605l-1.392 2.922H0z" />
-                  </svg>
-                  Se connecter avec Strava
-                </span>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      {/* Logo avec dimensions fixes pour contrôler la hauteur */}
+      <div className="mb-2 h-[60px] flex items-center justify-center">
+        <div className="w-[200px] h-[60px] overflow-hidden flex items-center justify-center">
+          <Logo
+            width={200}
+            height={24}
+            viewBoxHeight={24}
+            viewBoxWidth={200}
+            className="text-black"
+          />
+        </div>
       </div>
+
+      <Card className="w-full max-w-md">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl font-bold">
+            Empower your Strava activities descriptions with no effort
+          </CardTitle>
+          <CardDescription>
+            Automatically analyze your interval workouts and enhance their
+            descriptions with detailed statistics and insightful data.
+          </CardDescription>
+        </CardHeader>
+
+        <CardFooter className="pt-2">
+          <Button
+            className="w-full bg-white text-black border border-gray-200 hover:bg-gray-100 h-12"
+            onClick={handleStravaLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="flex items-center">
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Connexion en cours...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2 h-full">
+                <StravaLogo width={20} height={20} />
+                Se connecter avec Strava
+              </span>
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

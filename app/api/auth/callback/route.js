@@ -15,19 +15,19 @@ export async function GET(request) {
 
     // Gérer les erreurs d'autorisation
     if (error) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/?auth_error=${encodeURIComponent(
-          error
-        )}`
-      );
+      const redirectUrl = new URL(
+        `/?auth_error=${encodeURIComponent(error)}`,
+        request.url
+      ).href;
+      return NextResponse.redirect(redirectUrl);
     }
 
     if (!code) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/?auth_error=${encodeURIComponent(
-          "Code d'autorisation manquant"
-        )}`
-      );
+      const redirectUrl = new URL(
+        `/?auth_error=${encodeURIComponent("Code d'autorisation manquant")}`,
+        request.url
+      ).href;
+      return NextResponse.redirect(redirectUrl);
     }
 
     // Échanger le code contre des tokens
@@ -41,6 +41,8 @@ export async function GET(request) {
 
     // Stocker la session dans un cookie sécurisé
     const cookieStore = cookies();
+
+    // L'API cookies() n'est pas une promesse
     cookieStore.set("sessionId", sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -58,15 +60,14 @@ export async function GET(request) {
     });
 
     // Rediriger vers la page d'accueil avec un message de succès
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/?auth_success=true`
-    );
+    const redirectUrl = new URL("/?auth_success=true", request.url).href;
+    return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error("Erreur dans le callback d'authentification:", error);
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/?auth_error=${encodeURIComponent(
-        error.message
-      )}`
-    );
+    const redirectUrl = new URL(
+      `/?auth_error=${encodeURIComponent(error.message)}`,
+      request.url
+    ).href;
+    return NextResponse.redirect(redirectUrl);
   }
 }

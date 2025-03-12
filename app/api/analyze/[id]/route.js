@@ -1,5 +1,7 @@
 // app/api/analyze/[id]/route.js
 import {
+  extractStatsFromDescription,
+  generateEnhancedTitle,
   generateWorkoutDescription,
   shouldProcessActivity,
 } from "@/lib/strava";
@@ -7,7 +9,7 @@ import {
   getActivityLaps,
   getStravaActivity,
   getValidAccessToken,
-  updateActivityDescription,
+  updateActivityTitleAndDescription,
 } from "@/lib/strava-service";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -63,8 +65,19 @@ export async function GET(request, { params }) {
     // Générer la description
     const newDescription = generateWorkoutDescription(activity, laps);
 
-    // Mettre à jour la description sur Strava
-    await updateActivityDescription(accessToken, activityId, newDescription);
+    // Extraire les statistiques de la description
+    const stats = extractStatsFromDescription(newDescription);
+
+    // Générer le nouveau titre enrichi
+    const newTitle = generateEnhancedTitle(activity.name, stats);
+
+    // Mettre à jour la description et le titre sur Strava
+    await updateActivityTitleAndDescription(
+      accessToken,
+      activityId,
+      newTitle,
+      newDescription
+    );
 
     // Renvoyer l'activité mise à jour
     return NextResponse.json({
@@ -72,6 +85,7 @@ export async function GET(request, { params }) {
       message: `Activité "${activity.name}" analysée et mise à jour avec succès`,
       activity: {
         ...activity,
+        name: newTitle,
         description: newDescription,
         isIntervalWorkout: true,
         analyzed: true,

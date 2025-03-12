@@ -1,6 +1,3 @@
-// app/page.js
-// Page d'accueil avec affichage des activités récentes et possibilité d'analyse
-
 "use client";
 import ActivityCard from "@/components/ActivityCard";
 import { useEffect, useState } from "react";
@@ -91,11 +88,6 @@ export default function Home() {
               Automatically analyze your interval workouts and enhance their
               descriptions with detailed statistics and insightful data.
             </p>
-
-            {/* Si vous avez un bouton de connexion Strava, vous pouvez l'ajouter ici */}
-            {/* <button className="bg-white text-orange-600 font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-gray-100">
-              Connect with Strava
-            </button> */}
           </div>
         </div>
       </header>
@@ -186,16 +178,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-
-      {/* Footer simple */}
-      <footer className="bg-gray-800 text-white py-6">
-        <div className="container mx-auto text-center text-gray-400 text-sm">
-          <p>
-            © {new Date().getFullYear()} Strava Analyzer. Cet outil n'est pas
-            affilié à Strava Inc.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
