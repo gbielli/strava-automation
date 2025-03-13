@@ -8,17 +8,17 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
-//   directUrl = env("DIRECT_URL")
-// }
-
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_PRISMA_URL") // Utilisez la variable générée par l'intégration
-  directUrl = env("POSTGRES_URL_NON_POOLING") 
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("POSTGRES_PRISMA_URL") 
+//   directUrl = env("POSTGRES_URL_NON_POOLING") 
+// }
 
 model User {
   id            String    @id @default(cuid())
