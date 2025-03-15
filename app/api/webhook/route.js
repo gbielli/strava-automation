@@ -1,7 +1,9 @@
 // app/api/webhook/route.js
 import prisma from "@/lib/prisma";
-import { processActivityWebhook } from "@/lib/strava-service";
+import crypto from "crypto";
+import { NextResponse } from "next/server";
 
+// Utiliser le runtime NodeJS standard pour Prisma
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
@@ -15,67 +17,62 @@ export async function POST(request) {
       eventData.object_type !== "activity" ||
       (eventData.aspect_type !== "create" && eventData.aspect_type !== "update")
     ) {
-      return Response.json({ message: "Événement ignoré - pas pertinent" });
+      return NextResponse.json({ message: "Événement ignoré - pas pertinent" });
     }
 
-    // Enregistrer l'événement dans la DB comme filet de sécurité
-    // avec un statut "en cours de traitement"
+    // Générer un ID unique pour cet événement
+    const eventId = crypto.randomUUID();
+
+    // Enregistrer l'événement dans la DB avec un statut initial
     const storedEvent = await prisma.webhookEvent.create({
       data: {
+        id: eventId,
         eventType: eventData.aspect_type,
         objectType: eventData.object_type,
         objectId: eventData.object_id.toString(),
         athleteId: eventData.owner_id.toString(),
         rawData: JSON.stringify(eventData),
-        status: "PROCESSING", // Statut "en cours"
+        status: "RECEIVED", // État initial
         createdAt: new Date(),
       },
     });
 
-    // Traiter l'événement immédiatement de manière non-bloquante
-    const processPromise = processActivityWebhook(eventData)
-      .then(async (result) => {
-        // Mettre à jour le statut dans la DB une fois terminé
-        await prisma.webhookEvent.update({
-          where: { id: storedEvent.id },
-          data: {
-            status: result.success ? "COMPLETED" : "FAILED",
-            message: result.message,
-            completedAt: new Date(),
-          },
-        });
-        console.log(
-          `Traitement terminé pour l'événement ${storedEvent.id}: ${result.message}`
-        );
-      })
-      .catch(async (error) => {
-        // Gérer les erreurs
-        console.error(
-          `Erreur lors du traitement de l'événement ${storedEvent.id}:`,
-          error
-        );
-        await prisma.webhookEvent.update({
-          where: { id: storedEvent.id },
-          data: {
-            status: "FAILED",
-            message: error.message,
-            completedAt: new Date(),
-          },
-        });
-      });
+    console.log(`Événement ${eventId} enregistré, démarrage du traitement...`);
 
-    // Ne pas attendre la fin du traitement pour répondre
-    return Response.json({
-      message: "Événement reçu et en cours de traitement",
+    // Appeler le processeur de manière non-bloquante
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
+    const processorUrl = `${baseUrl}/api/internal/process-webhook`;
+
+    // Ne pas attendre la fin de fetch pour répondre rapidement à Strava
+    fetch(processorUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Internal-Secret":
+          process.env.INTERNAL_API_SECRET || "fallback-secret-key",
+        "X-Webhook-ID": eventId,
+      },
+      body: JSON.stringify(eventData),
+    }).catch((error) => {
+      console.error("Erreur lors de l'appel du processeur:", error);
+      // Ne pas bloquer la réponse à Strava
+    });
+
+    // Répondre immédiatement à Strava (sous 2 secondes)
+    return NextResponse.json({
+      message: "Événement reçu et mis en file d'attente pour traitement",
+      eventId,
     });
   } catch (error) {
     console.error("Erreur dans le webhook POST:", error);
 
-    // Si possible, enregistrer l'erreur
+    // Tenter d'enregistrer l'erreur si possible
     if (eventData) {
       try {
         await prisma.webhookEvent.create({
           data: {
+            id: crypto.randomUUID(),
             eventType: eventData.aspect_type || "unknown",
             objectType: eventData.object_type || "unknown",
             objectId: eventData.object_id?.toString() || "unknown",
@@ -91,7 +88,10 @@ export async function POST(request) {
       }
     }
 
-    // Toujours renvoyer 200 pour Strava
-    return Response.json({ message: "Événement reçu" });
+    // Toujours renvoyer un succès à Strava pour éviter les retentatives
+    return NextResponse.json({
+      message: "Événement reçu avec des erreurs",
+      error: error.message,
+    });
   }
 }
