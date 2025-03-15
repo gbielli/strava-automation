@@ -1,6 +1,6 @@
 // app/api/webhook/route.js
-import { NextResponse } from "next/server";
 import { processActivityWebhook } from "@/lib/strava-service";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -46,28 +46,50 @@ export async function GET(request) {
 }
 
 // Fonction pour recevoir les notifications d'événements
+// Dans app/api/webhook/route.js
 export async function POST(request) {
   try {
     // Répondre rapidement pour respecter le délai de 2 secondes de Strava
-    // Traiter l'événement de manière asynchrone
     const processEvent = async () => {
       try {
         const data = await request.json();
-        console.log("Webhook Strava reçu:", JSON.stringify(data));
+        console.log("Webhook Strava reçu:", JSON.stringify(data, null, 2));
 
-        // Traiter l'événement d'activité
-        const result = await processActivityWebhook(data);
+        // Essayez d'encapsuler tout le traitement dans un bloc try/catch plus précis
+        try {
+          // Traiter l'événement d'activité
+          const result = await processActivityWebhook(data);
+          console.log(
+            "Résultat du traitement webhook:",
+            result.processed
+              ? `Activité traitée pour l'athlète ${result.athleteId}`
+              : `Activité ignorée: ${result.message}`
+          );
+        } catch (processingError) {
+          // Capture et journalisation détaillée de l'erreur
+          console.error(
+            "Erreur spécifique dans processActivityWebhook:",
+            processingError.name,
+            processingError.message,
+            processingError.stack
+          );
 
-        console.log(
-          "Résultat du traitement webhook:",
-          result.processed
-            ? `Activité traitée pour l'athlète ${result.athleteId}`
-            : `Activité ignorée: ${result.message}`
-        );
+          // Tentative de diagnostic
+          if (
+            processingError.name === "ReferenceError" &&
+            processingError.message.includes("Cannot access 'n'")
+          ) {
+            console.error(
+              "Erreur de référence à 'n' détectée. Vérifiez l'ordre des déclarations de variables."
+            );
+          }
+        }
       } catch (error) {
         console.error(
           "Erreur lors du traitement asynchrone du webhook:",
-          error
+          error.name,
+          error.message,
+          error.stack
         );
       }
     };
