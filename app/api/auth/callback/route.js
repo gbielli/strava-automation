@@ -40,7 +40,7 @@ export async function GET(request) {
     const sessionId = nanoid();
 
     // Stocker la session dans un cookie sécurisé
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
 
     // L'API cookies() n'est pas une promesse
     cookieStore.set("sessionId", sessionId, {
