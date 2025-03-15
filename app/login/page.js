@@ -29,8 +29,10 @@ export default function Login() {
       redirectUri
     )}&response_type=code&scope=${scope}`;
 
+    // https://www.strava.com/oauth/authorize?client_id=150301&redirect_uri=https://strava-automation.vercel.app/api/auth/callback&response_type=code&scope=activity:read,activity:write
+
     // Rediriger l'utilisateur vers la page d'authentification Strava
-    window.location.href = authUrl;
+    https: window.location.href = authUrl;
   };
 
   return (

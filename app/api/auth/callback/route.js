@@ -40,10 +40,10 @@ export async function GET(request) {
     const sessionId = nanoid();
 
     // Stocker la session dans un cookie sécurisé
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     // L'API cookies() n'est pas une promesse
-    await cookieStore.set("sessionId", sessionId, {
+    cookieStore.set("sessionId", sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 30 * 24 * 60 * 60, // 30 jours
@@ -51,7 +51,7 @@ export async function GET(request) {
       sameSite: "lax",
     });
 
-    await cookieStore.set("userId", user.id, {
+    cookieStore.set("userId", user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 30 * 24 * 60 * 60, // 30 jours
@@ -61,13 +61,21 @@ export async function GET(request) {
 
     // Rediriger vers la page d'accueil avec un message de succès
     const redirectUrl = new URL("/?auth_success=true", request.url).href;
+
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error("Erreur dans le callback d'authentification:", error);
+
+    // Log des variables capturées
+    console.log("AUTH ERROR - Données:", {
+      error: error.message,
+    });
+
     const redirectUrl = new URL(
       `/?auth_error=${encodeURIComponent(error.message)}`,
       request.url
     ).href;
+
     return NextResponse.redirect(redirectUrl);
   }
 }
