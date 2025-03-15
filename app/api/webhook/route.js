@@ -1,7 +1,8 @@
 // app/api/webhook/route.js
+import prisma from "@/lib/prisma";
 import { processActivityWebhook } from "@/lib/strava-service";
 
-export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   let eventData = null;
