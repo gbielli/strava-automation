@@ -34,3 +34,16 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
+
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  eventType  String   // "create", "update", etc.
+  objectType String   // "activity", etc.
+  objectId   String   // ID de l'activité
+  athleteId  String   // ID de l'athlète
+  rawData    String   // JSON brut du webhook
+  status     String   // "PROCESSING", "COMPLETED", "FAILED", "ERROR"
+  message    String?  // Message de résultat ou d'erreur
+  createdAt  DateTime @default(now())
+  completedAt DateTime?
+}
