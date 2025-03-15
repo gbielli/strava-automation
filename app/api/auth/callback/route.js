@@ -43,7 +43,7 @@ export async function GET(request) {
     const cookieStore = cookies();
 
     // L'API cookies() n'est pas une promesse
-    cookieStore.set("sessionId", sessionId, {
+    await cookieStore.set("sessionId", sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 30 * 24 * 60 * 60, // 30 jours
@@ -51,7 +51,7 @@ export async function GET(request) {
       sameSite: "lax",
     });
 
-    cookieStore.set("userId", user.id, {
+    await cookieStore.set("userId", user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 30 * 24 * 60 * 60, // 30 jours
