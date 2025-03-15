@@ -44,12 +44,21 @@ export async function GET(request) {
     const activities = await response.json();
 
     // Enrichir les données des activités avec l'information sur les fractionnés
-    const processedActivities = activities.map((activity) => ({
-      ...activity,
-      isIntervalWorkout: shouldProcessActivity(activity),
-      analyzed:
-        activity.description && activity.description.includes("🏃 INTERVALLES"), // Vérification simplifiée
-    }));
+    const processedActivities = await Promise.all(
+      activities.map(async (activity) => {
+        const isIntervalWorkout = await shouldProcessActivity(
+          accessToken,
+          activity
+        );
+        return {
+          ...activity,
+          isIntervalWorkout,
+          analyzed:
+            activity.description &&
+            activity.description.includes("🏃 INTERVALLES"),
+        };
+      })
+    );
 
     return NextResponse.json({
       success: true,

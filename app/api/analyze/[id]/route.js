@@ -45,8 +45,12 @@ export async function GET(request, { params }) {
     // Récupérer les détails de l'activité
     const activity = await getStravaActivity(accessToken, activityId);
 
-    // Vérifier si c'est un fractionné
-    if (!shouldProcessActivity(activity)) {
+    const isIntervalWorkout = await shouldProcessActivity(
+      accessToken,
+      activity
+    );
+
+    if (!isIntervalWorkout) {
       return NextResponse.json({
         success: true,
         message: `Activité "${activity.name}" ignorée - pas un fractionné`,

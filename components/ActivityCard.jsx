@@ -1,5 +1,3 @@
-// Composant pour afficher une activité Strava avec la description formatée
-
 import React from "react";
 
 const ActivityCard = ({ activity, onAnalyze, analyzing }) => {
@@ -37,8 +35,10 @@ const ActivityCard = ({ activity, onAnalyze, analyzing }) => {
 
   // Vérifier si l'activité est un fractionné
   const isIntervalWorkout = () => {
-    const intervalPattern = /\d+\s*[xX]\s*\d+/;
-    return intervalPattern.test(activity.name);
+    if (activity.isIntervalWorkout !== undefined) {
+      return activity.isIntervalWorkout;
+    }
+    return false;
   };
 
   // Convertir le texte à afficher avec retours à la ligne
