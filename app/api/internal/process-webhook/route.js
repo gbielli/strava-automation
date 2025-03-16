@@ -1,6 +1,6 @@
 // app/api/internal/process-webhook/route.js
-import { processActivityWebhook } from "@/lib/strava-service";
 import prisma from "@/lib/prisma";
+import { processActivityWebhook } from "@/lib/strava-service";
 import { NextResponse } from "next/server";
 
 // Configuration pour les fonctions serverless
@@ -51,7 +51,7 @@ export async function POST(request) {
     );
 
     try {
-      // Traiter l'événement
+      // Traiter l'événement (cette fonction peut prendre du temps)
       const result = await processActivityWebhook(eventData);
 
       // Mettre à jour le statut final

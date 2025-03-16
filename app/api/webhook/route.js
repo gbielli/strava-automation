@@ -1,8 +1,9 @@
-// Dans app/api/webhook/route.js
+// app/api/webhook/route.js
 import prisma from "@/lib/prisma";
-import { processActivityWebhook } from "@/lib/strava-service";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   let eventData = null;
@@ -35,54 +36,31 @@ export async function POST(request) {
       },
     });
 
-    console.log(`Événement ${eventId} enregistré, démarrage du traitement...`);
+    console.log(
+      `Événement ${eventId} enregistré, programmation du traitement...`
+    );
 
-    // Lancer le traitement en arrière-plan AVANT de renvoyer la réponse
-    Promise.resolve().then(async () => {
-      try {
-        console.log(`Début du traitement de l'événement ${eventId}...`);
+    // Déclencher le traitement via un appel HTTP séparé à notre endpoint interne
+    // Cela permet de répondre rapidement à Strava tout en démarrant le traitement
+    const internalSecret =
+      process.env.INTERNAL_API_SECRET || "fallback-secret-key";
 
-        // Mettre à jour le statut
-        await prisma.webhookEvent.update({
-          where: { id: eventId },
-          data: { status: "PROCESSING" },
-        });
-
-        // Effectuer le traitement
-        const result = await processActivityWebhook(eventData);
-
-        // Mettre à jour le statut final
-        await prisma.webhookEvent.update({
-          where: { id: eventId },
-          data: {
-            status: result.success ? "COMPLETED" : "FAILED",
-            message: result.message,
-            completedAt: new Date(),
-          },
-        });
-
-        console.log(
-          `Traitement terminé pour l'événement ${eventId}: ${result.message}`
-        );
-      } catch (error) {
-        console.error(
-          `Erreur lors du traitement de l'événement ${eventId}:`,
-          error
-        );
-
-        // Mettre à jour le statut en cas d'erreur
-        await prisma.webhookEvent.update({
-          where: { id: eventId },
-          data: {
-            status: "FAILED",
-            message: error.message,
-            completedAt: new Date(),
-          },
-        });
-      }
+    // Utiliser fetch pour appeler notre endpoint de traitement interne
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/internal/process-webhook`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Internal-Secret": internalSecret,
+        "X-Webhook-ID": eventId,
+      },
+      body: JSON.stringify(eventData),
+    }).catch((error) => {
+      console.error(
+        `Erreur lors de l'appel à l'endpoint de traitement: ${error.message}`
+      );
     });
 
-    // Répondre immédiatement à Strava - CECI DOIT ÊTRE EN DEHORS DU PROMISE.RESOLVE()
+    // Répondre immédiatement à Strava
     return NextResponse.json({
       message: "Événement reçu et traitement initié",
       eventId,
