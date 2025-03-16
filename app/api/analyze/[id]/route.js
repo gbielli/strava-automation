@@ -50,10 +50,10 @@ export async function GET(request, { params }) {
       activity
     );
 
-    if (!isIntervalWorkout) {
+    if (!isIntervalWorkout && !activity.name.toLowerCase().includes("allure")) {
       return NextResponse.json({
         success: true,
-        message: `Activité "${activity.name}" ignorée - pas un fractionné`,
+        message: `Activité "${activity.name}" ignorée - pas un fractionné ou une séance d'allure`,
         activity: {
           ...activity,
           isIntervalWorkout: false,

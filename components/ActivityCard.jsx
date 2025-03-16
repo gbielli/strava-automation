@@ -105,30 +105,42 @@ const ActivityCard = ({ activity, onAnalyze, analyzing }) => {
         ) : (
           <p className="text-gray-500 italic mb-4">Pas de description</p>
         )}
-
         {isIntervalWorkout() && !activity.analyzed && (
           <button
             onClick={() => onAnalyze(activity.id)}
             disabled={analyzing}
             className="w-full mt-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:bg-green-300"
           >
-            {analyzing
-              ? "Analyse en cours..."
-              : "Analyser cette séance de fractionné"}
+            {analyzing ? "Analyse en cours..." : "Analyser cette séance"}
           </button>
         )}
 
-        {activity.analyzed && (
-          <div className="mt-2 text-sm text-green-600 font-medium">
-            ✓ Activité analysée
-          </div>
-        )}
-
-        {!isIntervalWorkout() && (
-          <div className="mt-2 text-sm text-gray-500">
-            Cette activité n'est pas un fractionné
-          </div>
-        )}
+        {!isIntervalWorkout() &&
+          !activity.name.toLowerCase().includes("allure") && (
+            <div className="mt-2 text-sm text-gray-500">
+              Cette activité n'est pas analysable
+            </div>
+          )}
+        {!isIntervalWorkout() &&
+          activity.name.toLowerCase().includes("allure") &&
+          !activity.analyzed && (
+            <button
+              onClick={() => onAnalyze(activity.id)}
+              disabled={analyzing}
+              className="w-full mt-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-blue-300"
+            >
+              {analyzing
+                ? "Analyse en cours..."
+                : "Analyser cette séance d'allure"}
+            </button>
+          )}
+        {!isIntervalWorkout() &&
+          activity.name.toLowerCase().includes("allure") &&
+          activity.analyzed && (
+            <div className="mt-2 text-sm text-green-600 font-medium">
+              ✓ Activité analysée
+            </div>
+          )}
       </div>
     </div>
   );
