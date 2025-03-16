@@ -1,4 +1,8 @@
 // Dans app/api/webhook/route.js
+import prisma from "@/lib/prisma";
+import { processActivityWebhook } from "@/lib/strava-service";
+import crypto from "crypto";
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
   let eventData = null;
