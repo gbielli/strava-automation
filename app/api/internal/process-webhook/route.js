@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 // Configuration pour les fonctions serverless
 export const dynamic = "force-dynamic";
 // Si vous avez un plan Vercel payant, vous pouvez augmenter cette valeur
-export const maxDuration = 60; // en secondes, si supporté par votre plan
+export const maxDuration = 20; // en secondes, si supporté par votre plan
 
 export async function POST(request) {
   // Vérifier la sécurité
